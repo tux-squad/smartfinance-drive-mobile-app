@@ -36,10 +36,10 @@ class AuthRepositoryImpl(
                     Result.failure(Exception("Empty response body"))
                 }
             } else {
-                Result.failure(Exception("HTTP Error: ${response.code()} - ${response.errorBody()?.string()}"))
+                Result.failure(Exception("Authentication failed"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Authentication service unavailable", e))
         }
     }
 
@@ -62,10 +62,10 @@ class AuthRepositoryImpl(
                     Result.failure(Exception("Empty response body"))
                 }
             } else {
-                Result.failure(Exception("HTTP Error: ${response.code()} - ${response.errorBody()?.string()}"))
+                Result.failure(Exception("Registration failed"))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Authentication service unavailable", e))
         }
     }
 
