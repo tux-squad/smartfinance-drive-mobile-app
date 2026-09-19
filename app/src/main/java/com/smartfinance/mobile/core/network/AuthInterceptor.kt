@@ -21,7 +21,7 @@ class AuthInterceptor(private val tokenStorage: TokenStorage) : Interceptor {
         val token = tokenStorage.getToken()
         val request = originalRequest.newBuilder().apply {
             if (!token.isNullOrBlank()) {
-                header("Authorization", "Bearer $token")
+                header("Authorization", "Bearer " + token)
             }
         }.build()
 
