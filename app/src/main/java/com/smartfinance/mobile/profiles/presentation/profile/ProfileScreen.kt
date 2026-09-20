@@ -2,6 +2,7 @@ package com.smartfinance.mobile.profiles.presentation.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.smartfinance.mobile.R
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
 import com.smartfinance.mobile.core.ui.theme.BorderSoft
 import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
@@ -66,7 +70,9 @@ fun ProfileScreen(
     financingRepository: FinancingRepository? = null,
     userId: String? = null,
     onNavigateToSettings: () -> Unit = {},
-    onNavigateToRequests: () -> Unit = {}
+    onNavigateToRequests: () -> Unit = {},
+    isSpanish: Boolean = true,
+    onLanguageChange: (Boolean) -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -95,7 +101,7 @@ fun ProfileScreen(
     ) {
         // Breadcrumb
         Text(
-            text = "Panel de Comprador / Mi Perfil",
+            text = stringResource(R.string.buyer_profile_breadcrumb),
             color = TextSecondary,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
@@ -111,7 +117,7 @@ fun ProfileScreen(
         ) {
             Column {
                 Text(
-                    text = "Mi Perfil",
+                    text = stringResource(R.string.my_profile),
                     color = TextPrimary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -120,7 +126,7 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "Actualiza tus datos para tus pre-evaluaciones.",
+                    text = stringResource(R.string.profile_description),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
@@ -135,10 +141,61 @@ fun ProfileScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = "Configuración",
+                    contentDescription = stringResource(R.string.settings),
                     tint = PrimaryBlue,
                     modifier = Modifier.size(20.dp)
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, BorderSoft, RoundedCornerShape(14.dp)),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.language_label),
+                        color = TextPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.profile_language_description),
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .background(Color(0xFFF2F4F7), RoundedCornerShape(10.dp))
+                        .padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ProfileLanguageOption(
+                        label = stringResource(R.string.language_spanish),
+                        selected = isSpanish,
+                        onClick = { onLanguageChange(true) }
+                    )
+                    ProfileLanguageOption(
+                        label = stringResource(R.string.language_english),
+                        selected = !isSpanish,
+                        onClick = { onLanguageChange(false) }
+                    )
+                }
             }
         }
 
@@ -159,7 +216,7 @@ fun ProfileScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Información Personal",
+                    text = stringResource(R.string.personal_information),
                     color = TextPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -169,7 +226,7 @@ fun ProfileScreen(
 
                 // Full Name Field
                 Text(
-                    text = "Nombre Completo",
+                    text = stringResource(R.string.full_name),
                     color = Color(0xFF334155),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
@@ -196,7 +253,7 @@ fun ProfileScreen(
 
                 // Email Field
                 Text(
-                    text = "Correo electrónico",
+                    text = stringResource(R.string.email),
                     color = Color(0xFF334155),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
@@ -231,6 +288,7 @@ fun ProfileScreen(
                                     current.copy(fullName = fullName, email = email)
                                 )
                             }
+
                         }
                     },
                     modifier = Modifier
@@ -240,7 +298,7 @@ fun ProfileScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = AccentOrange)
                 ) {
                     Text(
-                        text = "Guardar Cambios",
+                        text = stringResource(R.string.save_changes),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -253,7 +311,7 @@ fun ProfileScreen(
 
         // Mis Solicitudes Section
         Text(
-            text = "Mis Solicitudes",
+            text = stringResource(R.string.my_requests),
             color = TextPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
@@ -262,7 +320,7 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(2.dp))
 
         Text(
-            text = "Consulta el estado de tus solicitudes de financiamiento.",
+            text = stringResource(R.string.requests_description),
             color = TextSecondary,
             fontSize = 13.sp
         )
@@ -274,6 +332,27 @@ fun ProfileScreen(
             RequestItemCard(request = request)
             Spacer(modifier = Modifier.height(10.dp))
         }
+    }
+}
+
+@Composable
+private fun ProfileLanguageOption(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        color = if (selected) PrimaryBlue else Color.Transparent,
+        shape = RoundedCornerShape(7.dp),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else TextSecondary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
+        )
     }
 }
 
@@ -329,7 +408,7 @@ private fun RequestItemCard(request: CreditRequest) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Concesionaria:",
+                    text = stringResource(R.string.dealership),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
@@ -349,7 +428,7 @@ private fun RequestItemCard(request: CreditRequest) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Fecha:",
+                    text = stringResource(R.string.date),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
@@ -369,16 +448,16 @@ private fun RequestItemCard(request: CreditRequest) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Estado de Crédito:",
+                    text = stringResource(R.string.credit_status),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
 
                 val (bgColor, textColor, label) = when (request.status) {
-                    CreditStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, "Aprobado")
-                    CreditStatus.IN_REVIEW -> Triple(StatusReviewBg, StatusReviewText, "En revisión")
-                    CreditStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "Rechazado")
-                    CreditStatus.PENDING -> Triple(Color(0xFFE2E8F0), Color(0xFF475569), "Pendiente")
+                    CreditStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, stringResource(R.string.approved))
+                    CreditStatus.IN_REVIEW -> Triple(StatusReviewBg, StatusReviewText, stringResource(R.string.in_review))
+                    CreditStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), stringResource(R.string.rejected))
+                    CreditStatus.PENDING -> Triple(Color(0xFFE2E8F0), Color(0xFF475569), stringResource(R.string.pending))
                 }
 
                 Box(

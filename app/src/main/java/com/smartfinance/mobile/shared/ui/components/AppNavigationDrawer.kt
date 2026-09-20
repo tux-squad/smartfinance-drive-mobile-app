@@ -35,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartfinance.mobile.core.ui.theme.NavyDark
+import androidx.compose.ui.res.stringResource
+import com.smartfinance.mobile.R
 
 data class NavDrawerItem(
     val routeKey: String,
@@ -49,13 +51,13 @@ fun AppNavigationDrawer(
 ) {
     val menuItems = listOf(
         NavDrawerItem("dashboard", "Dashboard", Icons.Default.Dashboard),
-        NavDrawerItem("vehicles", "Vehículos", Icons.Default.DirectionsCar),
-        NavDrawerItem("dealerships", "Concesionarias", Icons.Default.Storefront),
-        NavDrawerItem("messages", "Mensajes", Icons.Default.ChatBubble),
-        NavDrawerItem("ai_consult", "Consulta IA", Icons.Default.AutoAwesome),
-        NavDrawerItem("reports", "Reportes", Icons.Default.Assessment),
-        NavDrawerItem("profile", "Perfil", Icons.Default.Person),
-        NavDrawerItem("settings", "Configuración", Icons.Default.Settings)
+        NavDrawerItem("vehicles", stringResource(R.string.vehicles), Icons.Default.DirectionsCar),
+        NavDrawerItem("dealerships", stringResource(R.string.dealerships), Icons.Default.Storefront),
+        NavDrawerItem("messages", stringResource(R.string.messages), Icons.Default.ChatBubble),
+        NavDrawerItem("ai_consult", stringResource(R.string.ai_consult), Icons.Default.AutoAwesome),
+        NavDrawerItem("reports", stringResource(R.string.reports), Icons.Default.Assessment),
+        NavDrawerItem("profile", stringResource(R.string.profile), Icons.Default.Person),
+        NavDrawerItem("settings", stringResource(R.string.settings), Icons.Default.Settings)
     )
 
     Column(

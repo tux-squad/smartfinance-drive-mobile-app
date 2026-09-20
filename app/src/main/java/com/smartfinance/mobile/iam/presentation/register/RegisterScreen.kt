@@ -50,6 +50,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.smartfinance.mobile.R
 import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
 import com.smartfinance.mobile.core.ui.theme.SmartFinanceDriveTheme
 import com.smartfinance.mobile.iam.domain.repository.AuthRepository
@@ -106,14 +108,14 @@ fun RegisterScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = "Crear cuenta",
+                        contentDescription = stringResource(R.string.create_account_accessibility),
                         tint = Color.White,
                         modifier = Modifier.size(30.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "SmartFinance Drive",
+                    text = stringResource(R.string.app_name),
                     color = SecurityBlue,
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
@@ -131,7 +133,7 @@ fun RegisterScreen(
                     .padding(horizontal = 24.dp, vertical = 28.dp)
             ) {
                 Text(
-                    text = "Crear cuenta",
+                    text = stringResource(R.string.create_account),
                     color = TextPrimary,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
@@ -140,7 +142,7 @@ fun RegisterScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Regístrate para comenzar a usar el portal",
+                    text = stringResource(R.string.register_description),
                     color = TextSecondary,
                     fontSize = 16.sp,
                     modifier = Modifier.fillMaxWidth(),
@@ -148,11 +150,11 @@ fun RegisterScreen(
                 )
 
                 Spacer(modifier = Modifier.height(28.dp))
-                FieldLabel("NOMBRE DE USUARIO")
+                FieldLabel(stringResource(R.string.username_label))
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it; errorMessage = null },
-                    placeholder = { Text("carlos.morales", color = TextSecondary) },
+                    placeholder = { Text(stringResource(R.string.username_example), color = TextSecondary) },
                     leadingIcon = {
                         Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF98A2B3))
                     },
@@ -163,11 +165,11 @@ fun RegisterScreen(
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
-                FieldLabel("CORREO ELECTRÓNICO")
+                FieldLabel(stringResource(R.string.email_label))
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it; errorMessage = null },
-                    placeholder = { Text("correo@ejemplo.com", color = TextSecondary) },
+                    placeholder = { Text(stringResource(R.string.email_example), color = TextSecondary) },
                     leadingIcon = {
                         Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF98A2B3))
                     },
@@ -179,20 +181,20 @@ fun RegisterScreen(
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
-                FieldLabel("CONTRASEÑA")
+                FieldLabel(stringResource(R.string.password))
                 PasswordField(
                     value = password,
-                    placeholder = "8+ caracteres, mayúscula y símbolo",
+                    placeholder = stringResource(R.string.password_requirements),
                     visible = passwordVisible,
                     onValueChange = { password = it; errorMessage = null },
                     onToggleVisibility = { passwordVisible = !passwordVisible }
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
-                FieldLabel("CONFIRMAR CONTRASEÑA")
+                FieldLabel(stringResource(R.string.confirm_password))
                 PasswordField(
                     value = confirmPassword,
-                    placeholder = "Repite tu contraseña",
+                    placeholder = stringResource(R.string.repeat_password),
                     visible = confirmVisible,
                     onValueChange = { confirmPassword = it; errorMessage = null },
                     onToggleVisibility = { confirmVisible = !confirmVisible }
@@ -211,23 +213,32 @@ fun RegisterScreen(
                     )
                 }
 
+                val completeFieldsMessage = stringResource(R.string.complete_fields)
+                val validEmailMessage = stringResource(R.string.valid_email)
+                val passwordMinimumMessage = stringResource(R.string.password_minimum)
+                val passwordUppercaseMessage = stringResource(R.string.password_uppercase)
+                val passwordSpecialMessage = stringResource(R.string.password_special)
+                val passwordMismatchMessage = stringResource(R.string.password_mismatch)
+                val registrationUnavailableMessage = stringResource(R.string.registration_unavailable)
+                val registrationFailedMessage = stringResource(R.string.registration_failed)
+
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = {
                         scope.launch {
                             when {
                                 username.isBlank() || email.isBlank() || password.isBlank() ->
-                                    errorMessage = "Por favor completa todos los campos."
+                                    errorMessage = completeFieldsMessage
                                 !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() ->
-                                    errorMessage = "Ingresa un correo electrónico válido."
+                                    errorMessage = validEmailMessage
                                 password.length < 8 ->
-                                    errorMessage = "La contraseña debe tener al menos 8 caracteres."
+                                    errorMessage = passwordMinimumMessage
                                 password.none { it.isUpperCase() } ->
-                                    errorMessage = "La contraseña debe incluir una letra mayúscula."
+                                    errorMessage = passwordUppercaseMessage
                                 password.none { !it.isLetterOrDigit() } ->
-                                    errorMessage = "La contraseña debe incluir un carácter especial."
+                                    errorMessage = passwordSpecialMessage
                                 password != confirmPassword ->
-                                    errorMessage = "Las contraseñas no coinciden."
+                                    errorMessage = passwordMismatchMessage
                                 else -> {
                                     isLoading = true
                                     val result = authRepository?.signUp(
@@ -236,12 +247,12 @@ fun RegisterScreen(
                                         password
                                     )
                                     if (result == null) {
-                                        errorMessage = "El servicio de registro no está disponible."
+                                        errorMessage = registrationUnavailableMessage
                                     } else {
                                         result.onSuccess {
                                             onRegisterSuccess()
                                         }.onFailure {
-                                            errorMessage = "No se pudo crear la cuenta. Verifica tus datos."
+                                            errorMessage = registrationFailedMessage
                                         }
                                     }
                                     isLoading = false
@@ -266,7 +277,7 @@ fun RegisterScreen(
                             modifier = Modifier.size(22.dp)
                         )
                     } else {
-                        Text("Crear mi cuenta", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.create_my_account), fontSize = 17.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -286,7 +297,7 @@ fun RegisterScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Usa una contraseña única para proteger tu cuenta.",
+                        text = stringResource(R.string.password_security),
                         color = Color(0xFF17517A),
                         fontSize = 12.sp
                     )
@@ -299,9 +310,9 @@ fun RegisterScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("¿Ya tienes cuenta? ", color = TextSecondary, fontSize = 15.sp)
+                Text(stringResource(R.string.already_account) + " ", color = TextSecondary, fontSize = 15.sp)
                 Text(
-                    text = "Inicia sesión",
+                    text = stringResource(R.string.sign_in),
                     color = SecurityBlue,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,

@@ -85,6 +85,17 @@ La aplicación utiliza repositorios para separar las pantallas de las fuentes de
 - El campo de contraseña permite ocultar y mostrar el valor introducido.
 - El acceso demo no utiliza credenciales falsas ni guarda un token; entra directamente al flujo de comprador para fines de presentación.
 
+## Internacionalización
+
+Los flujos de inicio de sesión y registro están disponibles en español e inglés mediante recursos nativos de Android:
+
+```text
+app/src/main/res/values/strings.xml       # Inglés, idioma base
+app/src/main/res/values-es/strings.xml    # Español
+```
+
+El selector `ES / EN` aparece en la pantalla de inicio de sesión. La selección se guarda localmente y se conserva para las siguientes aperturas de la aplicación. El español es el idioma inicial para conservar la experiencia actual.
+
 ## Requisitos
 
 - Android Studio actualizado.

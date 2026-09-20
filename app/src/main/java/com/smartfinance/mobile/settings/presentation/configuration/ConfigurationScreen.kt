@@ -47,6 +47,8 @@ import com.smartfinance.mobile.core.ui.theme.SmartFinanceDriveTheme
 import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
 import com.smartfinance.mobile.shared.ui.layouts.MobileShell
+import androidx.compose.ui.res.stringResource
+import com.smartfinance.mobile.R
 
 @Composable
 fun ConfigurationScreen(
@@ -65,7 +67,7 @@ fun ConfigurationScreen(
     ) {
         // Breadcrumb
         Text(
-            text = "Panel de Comprador / Configuración",
+            text = stringResource(R.string.buyer_settings_breadcrumb),
             color = TextSecondary,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium
@@ -81,7 +83,7 @@ fun ConfigurationScreen(
         ) {
             Column {
                 Text(
-                    text = "Configuración",
+                    text = stringResource(R.string.settings),
                     color = TextPrimary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
@@ -90,7 +92,7 @@ fun ConfigurationScreen(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = "Administra tus preferencias y ajustes generales.",
+                    text = stringResource(R.string.settings_description),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
@@ -105,7 +107,7 @@ fun ConfigurationScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "Mi Perfil",
+                    contentDescription = stringResource(R.string.my_profile),
                     tint = PrimaryBlue,
                     modifier = Modifier.size(20.dp)
                 )
@@ -129,7 +131,7 @@ fun ConfigurationScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Notificaciones",
+                    text = stringResource(R.string.notifications),
                     color = TextPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -145,14 +147,14 @@ fun ConfigurationScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Alertas de actualización",
+                            text = stringResource(R.string.update_alerts),
                             color = TextPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Notificarme el estado de crédito.",
+                            text = stringResource(R.string.credit_status_notification),
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
@@ -180,14 +182,14 @@ fun ConfigurationScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Resumen semanal",
+                            text = stringResource(R.string.weekly_summary),
                             color = TextPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Recomendados de autos por correo.",
+                            text = stringResource(R.string.car_recommendations),
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
@@ -224,7 +226,7 @@ fun ConfigurationScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Seguridad de la Cuenta",
+                    text = stringResource(R.string.account_security),
                     color = TextPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -234,7 +236,7 @@ fun ConfigurationScreen(
 
                 // Current Password Field
                 Text(
-                    text = "Contraseña Actual",
+                    text = stringResource(R.string.current_password),
                     color = Color(0xFF334155),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
@@ -262,7 +264,7 @@ fun ConfigurationScreen(
 
                 // New Password Field
                 Text(
-                    text = "Nueva Contraseña",
+                    text = stringResource(R.string.new_password),
                     color = Color(0xFF334155),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
@@ -298,7 +300,7 @@ fun ConfigurationScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = AccentOrange)
                 ) {
                     Text(
-                        text = "Actualizar contraseña",
+                        text = stringResource(R.string.update_password),
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -324,7 +326,7 @@ fun ConfigurationScreen(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = "Zona de peligro",
+                    text = stringResource(R.string.danger_zone),
                     color = Color(0xFFEF4444),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
@@ -333,7 +335,7 @@ fun ConfigurationScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Eliminarás permanentemente todas tus búsquedas y solicitudes de SmartFinance.",
+                    text = stringResource(R.string.delete_warning),
                     color = TextSecondary,
                     fontSize = 13.sp,
                     lineHeight = 18.sp

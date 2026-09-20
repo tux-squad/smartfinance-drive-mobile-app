@@ -1,6 +1,9 @@
 package com.smartfinance.mobile
 
 import android.os.Bundle
+import android.os.Build
+import android.content.res.Configuration
+import java.util.Locale
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Box
@@ -50,19 +55,58 @@ import kotlinx.coroutines.launch
 // ── App-level navigation states ─────────────────────────────────────────────
 private enum class AppScreen { LOGIN, REGISTER, CONSUMER_APP, DEALERSHIP_APP }
 
+private const val KEY_LANGUAGE = "preferred_language"
+
+private fun MainActivity.applySavedLanguage() {
+    val language = getPreferences(android.content.Context.MODE_PRIVATE)
+        .getString(KEY_LANGUAGE, "es") ?: "es"
+    updateAppLocale(language)
+}
+
+private fun MainActivity.changeLanguage(language: String): Configuration {
+    getPreferences(android.content.Context.MODE_PRIVATE)
+        .edit()
+        .putString(KEY_LANGUAGE, language)
+        .apply()
+    return updateAppLocale(language)
+}
+
+private fun MainActivity.updateAppLocale(language: String): Configuration {
+    val locale = Locale.forLanguageTag(language)
+    Locale.setDefault(locale)
+    val configuration = Configuration(resources.configuration)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        configuration.setLocale(locale)
+    } else {
+        @Suppress("DEPRECATION")
+        configuration.locale = locale
+    }
+    @Suppress("DEPRECATION")
+    resources.updateConfiguration(configuration, resources.displayMetrics)
+    return configuration
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applySavedLanguage()
         enableEdgeToEdge()
         setContent {
             SmartFinanceDriveTheme {
                 val application = application as SmartFinanceApplication
                 val container = application.container
+                var isSpanish by remember {
+                    mutableStateOf(resources.configuration.locales[0].language != "en")
+                }
+                var appConfiguration by remember {
+                    mutableStateOf(Configuration(resources.configuration))
+                }
 
-                // ── Top-level app screen (Login → Consumer app) ───────────
-                var appScreen by remember { mutableStateOf(AppScreen.LOGIN) }
+                CompositionLocalProvider(LocalConfiguration provides appConfiguration) {
+                    // ── Top-level app screen (Login → Consumer app) ───────────
+                    var appScreen by remember { mutableStateOf(AppScreen.LOGIN) }
 
-                when (appScreen) {
+                    when (appScreen) {
 
                     // ══════════════════════════════════════════════════════
                     // LOGIN (IAM bounded context)
@@ -72,7 +116,12 @@ class MainActivity : ComponentActivity() {
                         onLoginSuccess = { isDealer ->
                             appScreen = if (isDealer) AppScreen.DEALERSHIP_APP else AppScreen.CONSUMER_APP
                         },
-                        onNavigateToRegister = { appScreen = AppScreen.REGISTER }
+                        onNavigateToRegister = { appScreen = AppScreen.REGISTER },
+                        isSpanish = isSpanish,
+                        onLanguageChange = { spanish ->
+                            appConfiguration = changeLanguage(if (spanish) "es" else "en")
+                            isSpanish = spanish
+                        }
                     )
 
                     // ══════════════════════════════════════════════════════
@@ -315,13 +364,19 @@ class MainActivity : ComponentActivity() {
                                             financingRepository = container.financingRepository,
                                             userId = container.tokenStorage.getUserId(),
                                             onNavigateToSettings = { isConfigurationOpen = true },
-                                            onNavigateToRequests = { selectedIndex = 4 }
+                                            onNavigateToRequests = { selectedIndex = 4 },
+                                            isSpanish = isSpanish,
+                                            onLanguageChange = { spanish ->
+                                                appConfiguration = changeLanguage(if (spanish) "es" else "en")
+                                                isSpanish = spanish
+                                            }
                                         )
                                     }
 
                                     else -> VehicleListScreen(vehicleRepository = container.vehicleRepository)
                                 }
                             }
+
                         }
                     }
 
@@ -396,6 +451,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
             }
         }
     }

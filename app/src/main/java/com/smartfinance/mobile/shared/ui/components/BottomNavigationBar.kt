@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
 import com.smartfinance.mobile.core.ui.theme.NavInactive
 import com.smartfinance.mobile.core.ui.theme.NavyDark
+import androidx.compose.ui.res.stringResource
+import com.smartfinance.mobile.R
 
 @Composable
 fun BottomNavigationBar(
@@ -39,12 +41,12 @@ fun BottomNavigationBar(
     onItemClick: (Int) -> Unit = {}
 ) {
     val items = listOf(
-        "Inicio" to Icons.Default.DirectionsCar,
-        "Buscar" to Icons.Default.Search,
-        "Mensajes" to Icons.Default.ChatBubble,
-        "Consulta IA" to Icons.Default.AutoAwesome,
-        "Reportes" to Icons.Default.Assessment,
-        "Mi Perfil" to Icons.Default.AccountCircle
+        stringResource(R.string.home) to Icons.Default.DirectionsCar,
+        stringResource(R.string.search) to Icons.Default.Search,
+        stringResource(R.string.messages) to Icons.Default.ChatBubble,
+        stringResource(R.string.ai_consult) to Icons.Default.AutoAwesome,
+        stringResource(R.string.reports) to Icons.Default.Assessment,
+        stringResource(R.string.my_profile) to Icons.Default.AccountCircle
     )
 
     Box(

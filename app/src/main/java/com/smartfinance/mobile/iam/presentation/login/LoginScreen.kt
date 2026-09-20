@@ -33,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.smartfinance.mobile.R
 import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
 import com.smartfinance.mobile.core.ui.theme.SmartFinanceDriveTheme
 import com.smartfinance.mobile.iam.domain.repository.AuthRepository
@@ -68,7 +71,9 @@ private val ErrorText = Color(0xFFB42318)
 fun LoginScreen(
     authRepository: AuthRepository? = null,
     onLoginSuccess: (isDealer: Boolean) -> Unit = {},
-    onNavigateToRegister: () -> Unit = {}
+    onNavigateToRegister: () -> Unit = {},
+    isSpanish: Boolean = true,
+    onLanguageChange: (Boolean) -> Unit = {}
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -90,6 +95,8 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(24.dp))
+            LanguageSelector(isSpanish = isSpanish, onLanguageChange = onLanguageChange)
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -103,14 +110,15 @@ fun LoginScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Acceso protegido",
+                        contentDescription = stringResource(R.string.secure_access),
                         tint = Color.White,
                         modifier = Modifier.size(30.dp)
                     )
                 }
+
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "SmartFinance Drive",
+                    text = stringResource(R.string.app_name),
                     color = SecurityBlue,
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
@@ -128,7 +136,7 @@ fun LoginScreen(
                     .padding(horizontal = 24.dp, vertical = 28.dp)
             ) {
                 Text(
-                    text = "Iniciar sesión",
+                    text = stringResource(R.string.login),
                     color = TextPrimary,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
@@ -137,7 +145,7 @@ fun LoginScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Ingresa tus credenciales para acceder al portal",
+                    text = stringResource(R.string.login_description),
                     color = TextSecondary,
                     fontSize = 16.sp,
                     modifier = Modifier.fillMaxWidth(),
@@ -145,14 +153,14 @@ fun LoginScreen(
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
-                FieldLabel("CORREO ELECTRÓNICO / USUARIO")
+                FieldLabel(stringResource(R.string.username_or_email))
                 OutlinedTextField(
                     value = username,
                     onValueChange = {
                         username = it
                         errorMessage = null
                     },
-                    placeholder = { Text("juan.perez@example.com", color = TextSecondary) },
+                    placeholder = { Text(stringResource(R.string.username_placeholder), color = TextSecondary) },
                     leadingIcon = {
                         Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF98A2B3))
                     },
@@ -169,9 +177,9 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FieldLabel("CONTRASEÑA")
+                    FieldLabel(stringResource(R.string.password))
                     Text(
-                        text = "¿Olvidaste tu contraseña?",
+                        text = stringResource(R.string.forgot_password),
                         color = SecurityBlue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -185,7 +193,7 @@ fun LoginScreen(
                         password = it
                         errorMessage = null
                     },
-                    placeholder = { Text("••••••••", color = TextSecondary) },
+                    placeholder = { Text(stringResource(R.string.password_placeholder), color = TextSecondary) },
                     leadingIcon = {
                         Icon(Icons.Default.Key, contentDescription = null, tint = Color(0xFF98A2B3))
                     },
@@ -219,6 +227,9 @@ fun LoginScreen(
                     )
                 }
 
+                val authenticationUnavailableMessage = stringResource(R.string.auth_unavailable)
+                val loginFailedMessage = stringResource(R.string.login_failed)
+
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = {
@@ -227,7 +238,7 @@ fun LoginScreen(
                             errorMessage = null
                             val result = authRepository?.signIn(username.trim(), password)
                             if (result == null) {
-                                errorMessage = "El servicio de autenticación no está disponible."
+                                errorMessage = authenticationUnavailableMessage
                             } else {
                                 result.onSuccess { user ->
                                     val role = user.role.uppercase()
@@ -237,7 +248,7 @@ fun LoginScreen(
                                             role.contains("CONCESION")
                                     )
                                 }.onFailure {
-                                    errorMessage = "No se pudo iniciar sesión. Verifica tus credenciales."
+                                    errorMessage = loginFailedMessage
                                 }
                             }
                             isLoading = false
@@ -256,7 +267,7 @@ fun LoginScreen(
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
                     } else {
-                        Text("Iniciar sesión", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.login), fontSize = 17.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -283,7 +294,7 @@ fun LoginScreen(
                         modifier = Modifier.size(21.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Ingresar como usuario demo", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.demo_login), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -296,9 +307,9 @@ fun LoginScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("¿No tienes una cuenta? ", color = TextSecondary, fontSize = 15.sp)
+                Text(stringResource(R.string.no_account) + " ", color = TextSecondary, fontSize = 15.sp)
                 Text(
-                    text = "Regístrate aquí",
+                    text = stringResource(R.string.register_here),
                     color = SecurityBlue,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
@@ -350,9 +361,49 @@ private fun SecurityNotice() {
         )
         Spacer(modifier = Modifier.width(10.dp))
         Text(
-            text = "Conexión segura. Tus credenciales se transmiten protegidas.",
+            text = stringResource(R.string.secure_connection),
             color = Color(0xFF17517A),
             fontSize = 12.sp
+        )
+    }
+}
+
+@Composable
+private fun LanguageSelector(
+    isSpanish: Boolean,
+    onLanguageChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE4E7EC), RoundedCornerShape(12.dp))
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.language_label),
+            color = TextSecondary,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        LanguageOption(stringResource(R.string.language_spanish), isSpanish) { onLanguageChange(true) }
+        LanguageOption(stringResource(R.string.language_english), !isSpanish) { onLanguageChange(false) }
+    }
+}
+
+@Composable
+private fun LanguageOption(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        color = if (selected) SecurityBlue else Color.Transparent,
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else TextSecondary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)
         )
     }
 }
