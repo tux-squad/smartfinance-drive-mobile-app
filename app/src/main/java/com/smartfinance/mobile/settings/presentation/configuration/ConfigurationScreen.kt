@@ -58,10 +58,6 @@ import com.smartfinance.mobile.core.ui.theme.BorderSoft
 import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
 import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
-<<<<<<< Updated upstream
-import com.smartfinance.mobile.shared.ui.layouts.MobileShell
-=======
->>>>>>> Stashed changes
 
 @Composable
 fun ConfigurationScreen(
@@ -170,21 +166,13 @@ fun ConfigurationScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-<<<<<<< Updated upstream
-                            text = "Alertas de actualización",
-=======
                             text = stringResource(R.string.application_updates),
->>>>>>> Stashed changes
                             color = TextPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-<<<<<<< Updated upstream
-                            text = "Notificarme el estado de crédito.",
-=======
                             text = stringResource(R.string.application_updates_desc),
->>>>>>> Stashed changes
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
@@ -217,11 +205,7 @@ fun ConfigurationScreen(
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-<<<<<<< Updated upstream
-                            text = "Recomendados de autos por correo.",
-=======
                             text = stringResource(R.string.weekly_summary_desc),
->>>>>>> Stashed changes
                             color = TextSecondary,
                             fontSize = 12.sp
                         )

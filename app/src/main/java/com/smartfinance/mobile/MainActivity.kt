@@ -59,23 +59,8 @@ class MainActivity : ComponentActivity() {
                 val application = application as SmartFinanceApplication
                 val container = application.container
 
-<<<<<<< Updated upstream
                 // ── Top-level app screen (Login → Consumer app) ───────────
                 var appScreen by remember { mutableStateOf(AppScreen.LOGIN) }
-=======
-                CompositionLocalProvider(LocalConfiguration provides appConfiguration) {
-                    val initialUser = remember { container.authRepository.getCurrentUser() }
-                    // ── Top-level app screen (Login → Consumer app) ───────────
-                    var appScreen by remember {
-                        mutableStateOf(
-                            when {
-                                initialUser == null -> AppScreen.LOGIN
-                                initialUser.isDealer -> AppScreen.DEALERSHIP_APP
-                                else -> AppScreen.CONSUMER_APP
-                            }
-                        )
-                    }
->>>>>>> Stashed changes
 
                 when (appScreen) {
 

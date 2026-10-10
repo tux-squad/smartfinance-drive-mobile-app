@@ -32,16 +32,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.smartfinance.mobile.R
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
 import com.smartfinance.mobile.core.ui.theme.BorderSoft
 import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
@@ -483,19 +484,12 @@ private fun RequestItemCard(request: CreditRequest) {
                 )
 
                 val (bgColor, textColor, label) = when (request.status) {
-<<<<<<< Updated upstream
-                    CreditStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, "Aprobado")
-                    CreditStatus.IN_REVIEW -> Triple(StatusReviewBg, StatusReviewText, "En revisión")
-                    CreditStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "Rechazado")
-                    CreditStatus.PENDING -> Triple(Color(0xFFE2E8F0), Color(0xFF475569), "Pendiente")
-=======
                     CreditStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, stringResource(R.string.approved))
                     CreditStatus.IN_REVIEW -> Triple(StatusReviewBg, StatusReviewText, stringResource(R.string.in_review))
                     CreditStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), stringResource(R.string.rejected))
                     CreditStatus.PENDING -> Triple(Color(0xFFE2E8F0), Color(0xFF475569), stringResource(R.string.pending))
                     CreditStatus.PRE_APPROVED -> Triple(Color(0xFFDBEAFE), Color(0xFF2563EB), "Pre-aprobado")
                     CreditStatus.DISBURSED -> Triple(Color(0xFFF3E8FF), Color(0xFF7E22CE), "Desembolsado")
->>>>>>> Stashed changes
                 }
 
                 Box(

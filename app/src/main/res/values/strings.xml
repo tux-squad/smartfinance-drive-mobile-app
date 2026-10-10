@@ -1,7 +1,4 @@
 <resources>
-<<<<<<< Updated upstream
-    <string name="app_name">smartfinance-drive-mobile-app</string>
-=======
     <string name="app_name">SmartFinance Drive</string>
     <string name="language_label">Language</string>
     <string name="language_spanish">ES</string>
@@ -84,5 +81,4 @@
     <string name="profile">Profile</string>
     <string name="vehicles">Vehicles</string>
     <string name="dealerships">Dealerships</string>
->>>>>>> Stashed changes
 </resources>
