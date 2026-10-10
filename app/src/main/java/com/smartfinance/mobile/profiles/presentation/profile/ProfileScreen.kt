@@ -70,6 +70,10 @@ fun ProfileScreen(
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var dni by remember { mutableStateOf("") }
+    var isVerifyingDni by remember { mutableStateOf(false) }
+    var dniVerificationMessage by remember { mutableStateOf<String?>(null) }
+    var saveFeedbackMessage by remember { mutableStateOf<String?>(null) }
     var profile by remember { mutableStateOf<Profile?>(null) }
     var requests by remember { mutableStateOf<List<CreditRequest>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -80,6 +84,7 @@ fun ProfileScreen(
             profile?.let {
                 fullName = it.fullName
                 email = it.email
+                dni = it.documentNumber ?: ""
             }
         }
         if (financingRepository != null) {
@@ -167,6 +172,89 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                // DNI / Document Number Field with RENIEC lookup
+                Text(
+                    text = "Documento de Identidad (DNI)",
+                    color = Color(0xFF334155),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = dni,
+                        onValueChange = { if (it.length <= 8) dni = it },
+                        placeholder = { Text("8 dígitos...", color = TextSecondary) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = BorderSoft,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            cursorColor = PrimaryBlue
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = {
+                            if (dni.length == 8 && profileRepository != null && !isVerifyingDni) {
+                                scope.launch {
+                                    isVerifyingDni = true
+                                    dniVerificationMessage = null
+                                    val reniec = profileRepository.consultReniecDni(dni)
+                                    isVerifyingDni = false
+                                    if (reniec != null) {
+                                        fullName = reniec.fullLegalName
+                                        dniVerificationMessage = "✓ Identidad verificada con RENIEC"
+                                    } else {
+                                        dniVerificationMessage = "No se encontraron datos para este DNI"
+                                    }
+                                }
+                            }
+                        },
+                        enabled = dni.length == 8 && !isVerifyingDni,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        if (isVerifyingDni) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "RENIEC",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                if (dniVerificationMessage != null) {
+                    Text(
+                        text = dniVerificationMessage!!,
+                        color = if (dniVerificationMessage!!.startsWith("✓")) Color(0xFF10B981) else Color(0xFFEF4444),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 // Full Name Field
                 Text(
                     text = "Nombre Completo",
@@ -224,12 +312,22 @@ fun ProfileScreen(
                 // Save Changes Button
                 Button(
                     onClick = {
-                        val current = profile
-                        if (profileRepository != null && current != null) {
+                        if (profileRepository != null) {
                             scope.launch {
-                                profile = profileRepository.updateProfile(
-                                    current.copy(fullName = fullName, email = email)
+                                saveFeedbackMessage = null
+                                val target = profile?.copy(
+                                    fullName = fullName,
+                                    email = email,
+                                    documentNumber = dni
+                                ) ?: Profile(
+                                    id = "",
+                                    userId = userId ?: "",
+                                    fullName = fullName,
+                                    email = email,
+                                    documentNumber = dni
                                 )
+                                profile = profileRepository.updateProfile(target)
+                                saveFeedbackMessage = "¡Perfil guardado correctamente!"
                             }
                         }
                     },
@@ -244,6 +342,16 @@ fun ProfileScreen(
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (saveFeedbackMessage != null) {
+                    Text(
+                        text = saveFeedbackMessage!!,
+                        color = Color(0xFF10B981),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             }
@@ -375,10 +483,19 @@ private fun RequestItemCard(request: CreditRequest) {
                 )
 
                 val (bgColor, textColor, label) = when (request.status) {
+<<<<<<< Updated upstream
                     CreditStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, "Aprobado")
                     CreditStatus.IN_REVIEW -> Triple(StatusReviewBg, StatusReviewText, "En revisión")
                     CreditStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), "Rechazado")
                     CreditStatus.PENDING -> Triple(Color(0xFFE2E8F0), Color(0xFF475569), "Pendiente")
+=======
+                    CreditStatus.APPROVED -> Triple(StatusApprovedBg, StatusApprovedText, stringResource(R.string.approved))
+                    CreditStatus.IN_REVIEW -> Triple(StatusReviewBg, StatusReviewText, stringResource(R.string.in_review))
+                    CreditStatus.REJECTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), stringResource(R.string.rejected))
+                    CreditStatus.PENDING -> Triple(Color(0xFFE2E8F0), Color(0xFF475569), stringResource(R.string.pending))
+                    CreditStatus.PRE_APPROVED -> Triple(Color(0xFFDBEAFE), Color(0xFF2563EB), "Pre-aprobado")
+                    CreditStatus.DISBURSED -> Triple(Color(0xFFF3E8FF), Color(0xFF7E22CE), "Desembolsado")
+>>>>>>> Stashed changes
                 }
 
                 Box(

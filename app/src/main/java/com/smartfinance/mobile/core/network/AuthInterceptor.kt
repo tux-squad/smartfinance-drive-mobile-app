@@ -14,7 +14,11 @@ class AuthInterceptor(private val tokenStorage: TokenStorage) : Interceptor {
         val originalRequest = chain.request()
         val path = originalRequest.url.encodedPath
 
-        if (path.contains("/auth/sessions") || path.contains("/auth/registrations")) {
+        val isPublicAuth = (path.contains("/auth/sessions") && !path.contains("/auth/sessions/current")) ||
+            path.contains("/auth/registrations") ||
+            path.contains("/auth/tokens")
+
+        if (isPublicAuth) {
             return chain.proceed(originalRequest)
         }
 

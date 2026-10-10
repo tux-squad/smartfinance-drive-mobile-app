@@ -6,7 +6,10 @@ data class Vehicle(
     val model: String,
     val year: Int,
     val priceUsd: Double,
-    val city: String,
-    val kilometers: Int,
-    val imageUrl: String
+    val city: String = "Lima",
+    val kilometers: Int = 0,
+    val imageUrl: String = "",
+    val condition: String = "NEW",
+    val financialEntityId: String = "",
+    val dealershipId: String? = null
 )

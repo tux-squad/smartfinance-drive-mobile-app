@@ -1,7 +1,6 @@
 package com.smartfinance.mobile.financing.presentation.requests
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +12,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Circle
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -28,94 +32,258 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
-import com.smartfinance.mobile.core.ui.theme.PrimaryBlueDark
 import com.smartfinance.mobile.core.ui.theme.SmartFinanceDriveTheme
 import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
-import com.smartfinance.mobile.shared.ui.layouts.MobileShell
 import com.smartfinance.mobile.financing.domain.model.CreditRequest
+import com.smartfinance.mobile.financing.domain.model.CreditStatus
 import com.smartfinance.mobile.financing.domain.repository.FinancingRepository
+import com.smartfinance.mobile.shared.ui.layouts.MobileShell
+import kotlinx.coroutines.launch
 
 @Composable
-fun MisSolicitudesScreen(financingRepository: FinancingRepository? = null) {
+fun MisSolicitudesScreen(
+    financingRepository: FinancingRepository? = null
+) {
     var requests by remember { mutableStateOf<List<CreditRequest>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(financingRepository) {
+    fun loadData() {
         if (financingRepository != null) {
-            requests = financingRepository.getMyCreditRequests()
+            scope.launch {
+                isLoading = true
+                requests = financingRepository.getMyCreditRequests()
+                isLoading = false
+            }
         }
     }
 
-    Column(
+    LaunchedEffect(financingRepository) {
+        loadData()
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF4F7FB))
+            .background(Color(0xFFF4F7FB)),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "Panel de Comprador / Mis Solicitudes",
-            color = TextSecondary,
-            fontSize = 15.sp,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)
-        )
-
-        if (requests.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                        tint = Color(0xFF8AA8C8),
-                        modifier = Modifier.size(54.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                Column {
                     Text(
-                        text = "No hay solicitudes aún",
-                        color = TextPrimary,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Aquí verás tus solicitudes y reportes activos.",
+                        text = "Panel de Comprador / Créditos",
                         color = TextSecondary,
-                        fontSize = 13.sp
+                        fontSize = 14.sp
+                    )
+
+                    Text(
+                        text = "Mis Solicitudes de Crédito",
+                        color = TextPrimary,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    Text(
+                        text = "Estado formal de tus solicitudes ante entidades financieras.",
+                        color = TextSecondary,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+
+                IconButton(
+                    onClick = { loadData() },
+                    modifier = Modifier.padding(top = 10.dp)
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = PrimaryBlue
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar",
+                            tint = PrimaryBlue
+                        )
+                    }
+                }
             }
-        } else {
-            Column(
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                requests.forEach { request ->
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (!isLoading && requests.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White, RoundedCornerShape(12.dp))
-                            .padding(14.dp)
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(request.vehicleTitle, color = TextPrimary, fontWeight = FontWeight.Bold)
-                        Text(request.dealershipName, color = TextSecondary, fontSize = 13.sp)
+                        Icon(
+                            imageVector = Icons.Default.Assignment,
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
                         Text(
-                            "${request.status.label} · ${request.date}",
-                            color = PrimaryBlue,
+                            text = "No tienes solicitudes registradas",
+                            color = TextPrimary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Explora vehículos en el catálogo e inicia tu pre-evaluación con los bancos aliados.",
+                            color = TextSecondary,
+                            fontSize = 13.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        items(requests, key = { it.id }) { request ->
+            CreditRequestCard(request = request)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun CreditRequestCard(request: CreditRequest) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header: Title + Status Badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(Color(0xFFEFF6FF), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column {
+                        Text(
+                            text = request.vehicleTitle,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = request.dealershipName,
+                            color = TextSecondary,
                             fontSize = 13.sp
                         )
                     }
+                }
+
+                StatusBadge(status = request.status)
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Details: Monto, Plazo, Fecha
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF8FAFC), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Monto estimado",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
+                    Text(
+                        text = if (request.requestedAmountUsd > 0) "$${"%,.0f".format(request.requestedAmountUsd)} USD" else "Consultar",
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Plazo",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
+                    Text(
+                        text = "${request.termMonths} meses",
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = request.date,
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
                 }
             }
         }
@@ -123,68 +291,26 @@ fun MisSolicitudesScreen(financingRepository: FinancingRepository? = null) {
 }
 
 @Composable
-private fun TopSolicitudesHeader() {
+private fun StatusBadge(status: CreditStatus) {
+    val (bgColor, textColor) = when (status) {
+        CreditStatus.APPROVED, CreditStatus.PRE_APPROVED -> Pair(Color(0xFFDCFCE7), Color(0xFF166534))
+        CreditStatus.IN_REVIEW -> Pair(Color(0xFFFEF3C7), Color(0xFF92400E))
+        CreditStatus.PENDING -> Pair(Color(0xFFDBEAFE), Color(0xFF1E40AF))
+        CreditStatus.REJECTED -> Pair(Color(0xFFFEE2E2), Color(0xFF991B1B))
+        CreditStatus.DISBURSED -> Pair(Color(0xFFF3E8FF), Color(0xFF6B21A8))
+    }
+
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(Brush.verticalGradient(colors = listOf(PrimaryBlueDark, PrimaryBlue)))
-            .padding(top = 18.dp, start = 18.dp, end = 18.dp, bottom = 18.dp)
+            .background(bgColor, RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.14f))
-                        .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Circle,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.9f),
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "SmartFinance\nDrive",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 14.sp
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notificaciones",
-                        tint = Color.White
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
+        Text(
+            text = status.label,
+            color = textColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -192,7 +318,7 @@ private fun TopSolicitudesHeader() {
 @Composable
 fun MisSolicitudesScreenPreview() {
     SmartFinanceDriveTheme {
-        MobileShell(selectedNavIndex = 3) {
+        MobileShell(selectedNavIndex = 4) {
             MisSolicitudesScreen()
         }
     }

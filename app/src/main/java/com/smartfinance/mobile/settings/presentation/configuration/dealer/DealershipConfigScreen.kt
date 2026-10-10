@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
+import kotlinx.coroutines.launch
 
 @Composable
 fun DealershipConfigScreen() {
@@ -43,6 +44,9 @@ fun DealershipConfigScreen() {
     var address by remember { mutableStateOf("Av. Insurgentes Sur 1234, Col. Del Valle") }
     var hours by remember { mutableStateOf("Lunes a Sábado: 9:00 - 19:00") }
     var description by remember { mutableStateOf("") }
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    var isSaving by remember { mutableStateOf(false) }
+    var saveSuccessMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -115,23 +119,53 @@ fun DealershipConfigScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            Spacer(modifier = Modifier.height(24.dp))
+
             // Subida de Banner
             Text("Banner de Portada", color = Color(0xFF0F203C), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             ImageUploadBox(height = 160, instruction = "Arrastra o haz clic para subir\nRecomendado: 1200 x 400 píxeles")
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (saveSuccessMessage != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFDCFCE7), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(saveSuccessMessage!!, color = Color(0xFF15803D), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+            }
 
             // Botón Guardar
             Button(
-                onClick = { /* TODO */ },
+                onClick = {
+                    coroutineScope.launch {
+                        isSaving = true
+                        kotlinx.coroutines.delay(400)
+                        isSaving = false
+                        saveSuccessMessage = "¡Datos y apariencia de la concesionaria guardados correctamente!"
+                    }
+                },
+                enabled = !isSaving,
                 colors = ButtonDefaults.buttonColors(containerColor = AccentOrange),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                Text("Guardar Apariencia", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                if (isSaving) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                } else {
+                    Text("Guardar Apariencia", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
             }
             
             Spacer(modifier = Modifier.height(32.dp))

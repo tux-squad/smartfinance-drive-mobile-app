@@ -24,4 +24,7 @@ interface ProfileApi {
 
     @DELETE("api/v1/profiles/{profileId}")
     suspend fun deleteProfile(@Path("profileId") profileId: String): Response<Void>
+
+    @GET("api/v1/profiles/reniec/dni/{dni}")
+    suspend fun getDniInfo(@Path("dni") dni: String): Response<ReniecDniResource>
 }

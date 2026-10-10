@@ -17,10 +17,12 @@ object RetrofitProvider {
             }
 
             val authInterceptor = AuthInterceptor(tokenStorage)
+            val tokenAuthenticator = TokenAuthenticator(tokenStorage)
 
             val client = OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)
                 .addInterceptor(authInterceptor)
+                .authenticator(tokenAuthenticator)
                 .build()
 
             retrofit = Retrofit.Builder()

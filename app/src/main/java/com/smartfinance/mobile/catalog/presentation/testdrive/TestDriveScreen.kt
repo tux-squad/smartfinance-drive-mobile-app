@@ -51,8 +51,16 @@ import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
 import com.smartfinance.mobile.shared.ui.layouts.MobileShell
 
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.rememberCoroutineScope
+import com.smartfinance.mobile.crm.domain.repository.TestDriveRepository
+import kotlinx.coroutines.launch
+
 @Composable
 fun TestDriveScreen(
+    testDriveRepository: TestDriveRepository? = null,
+    vehicleId: String = "",
+    dealershipId: String = "",
     dealershipName: String = "AutoCentro San Isidro",
     dealershipAddress: String = "Av. Javier Prado Este 1234, San Isidro",
     distanceText: String = "A 3.2 km de tu ubicación",
@@ -60,6 +68,8 @@ fun TestDriveScreen(
     onBack: () -> Unit = {},
     onConfirmBooking: (TestDriveBooking) -> Unit = {}
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    var isBookingInProgress by remember { mutableStateOf(false) }
     var selectedDay by remember { mutableIntStateOf(8) }
     var selectedTimeSlot by remember { mutableStateOf("11:30 AM") }
 
@@ -349,28 +359,55 @@ fun TestDriveScreen(
         // Confirm Button
         Button(
             onClick = {
-                val booking = TestDriveBooking(
-                    id = System.currentTimeMillis().toString(),
-                    vehicleTitle = vehicleName,
-                    dealershipName = dealershipName,
-                    dealershipAddress = dealershipAddress,
-                    selectedDate = "$selectedDay/10/2026",
-                    selectedTimeSlot = selectedTimeSlot
-                )
-                onConfirmBooking(booking)
+                if (isBookingInProgress) return@Button
+                isBookingInProgress = true
+                coroutineScope.launch {
+                    val dateFormatted = "2026-10-%02d".format(selectedDay)
+                    if (testDriveRepository != null) {
+                        testDriveRepository.bookTestDrive(
+                            vehicleId = vehicleId,
+                            dealershipId = dealershipId,
+                            dealershipName = dealershipName,
+                            dealershipAddress = dealershipAddress,
+                            vehicleTitle = vehicleName,
+                            date = dateFormatted,
+                            timeSlot = selectedTimeSlot,
+                            notes = "Reserva desde SmartFinance Drive Mobile"
+                        )
+                    }
+                    isBookingInProgress = false
+                    val booking = TestDriveBooking(
+                        id = System.currentTimeMillis().toString(),
+                        vehicleTitle = vehicleName,
+                        dealershipName = dealershipName,
+                        dealershipAddress = dealershipAddress,
+                        selectedDate = "$selectedDay/10/2026",
+                        selectedTimeSlot = selectedTimeSlot
+                    )
+                    onConfirmBooking(booking)
+                }
             },
+            enabled = !isBookingInProgress,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
             shape = RoundedCornerShape(10.dp),
             colors = ButtonDefaults.buttonColors(containerColor = AccentOrange)
         ) {
-            Text(
-                text = "Confirmar Cita",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (isBookingInProgress) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(22.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Confirmar Cita",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

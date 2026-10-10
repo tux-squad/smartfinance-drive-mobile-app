@@ -1,29 +1,40 @@
 package com.smartfinance.mobile.di
 
 import android.content.Context
+import com.smartfinance.mobile.catalog.domain.repository.AnalyticsRepository
 import com.smartfinance.mobile.catalog.domain.repository.VehicleRepository
+import com.smartfinance.mobile.catalog.infrastructure.remote.AnalyticsApi
 import com.smartfinance.mobile.catalog.infrastructure.remote.VehicleApi
+import com.smartfinance.mobile.catalog.infrastructure.repository.AnalyticsRepositoryImpl
 import com.smartfinance.mobile.catalog.infrastructure.repository.VehicleRepositoryImpl
 import com.smartfinance.mobile.core.network.RetrofitProvider
 import com.smartfinance.mobile.core.storage.TokenStorage
+import com.smartfinance.mobile.crm.domain.repository.CrmRepository
+import com.smartfinance.mobile.crm.domain.repository.TestDriveRepository
+import com.smartfinance.mobile.crm.infrastructure.remote.CrmApi
+import com.smartfinance.mobile.crm.infrastructure.repository.CrmRepositoryImpl
+import com.smartfinance.mobile.crm.infrastructure.repository.TestDriveRepositoryImpl
 import com.smartfinance.mobile.financing.domain.repository.FinancingRepository
 import com.smartfinance.mobile.financing.infrastructure.remote.FinancingApi
 import com.smartfinance.mobile.financing.infrastructure.repository.FinancingRepositoryImpl
 import com.smartfinance.mobile.iam.domain.repository.AuthRepository
 import com.smartfinance.mobile.iam.infrastructure.remote.AuthApi
 import com.smartfinance.mobile.iam.infrastructure.repository.AuthRepositoryImpl
+import com.smartfinance.mobile.messaging.domain.repository.ConsultationRepository
+import com.smartfinance.mobile.messaging.domain.repository.MessagingRepository
+import com.smartfinance.mobile.messaging.infrastructure.remote.ConsultationApi
+import com.smartfinance.mobile.messaging.infrastructure.repository.ConsultationRepositoryImpl
+import com.smartfinance.mobile.messaging.infrastructure.repository.MessagingRepositoryImpl
 import com.smartfinance.mobile.profiles.domain.repository.ProfileRepository
 import com.smartfinance.mobile.profiles.infrastructure.remote.ProfileApi
 import com.smartfinance.mobile.profiles.infrastructure.repository.ProfileRepositoryImpl
+import com.smartfinance.mobile.settings.domain.repository.BillingRepository
+import com.smartfinance.mobile.settings.infrastructure.remote.BillingApi
+import com.smartfinance.mobile.settings.infrastructure.repository.BillingRepositoryImpl
 
 /**
- * Contenedor manual de Inyección de Dependencias (DI) para la app.
- * Proveerá instancias únicas (Singletons) de todos los repositorios y servicios de red.
- */
-/**
- * Composition root de la aplicacion.
- *
- * Mantiene una unica instancia de almacenamiento, cliente HTTP y repositorios.
+ * Composition root de la aplicación.
+ * Mantiene una única instancia de almacenamiento, cliente HTTP y repositorios.
  */
 class AppContainer(private val context: Context) {
     
@@ -36,7 +47,7 @@ class AppContainer(private val context: Context) {
         RetrofitProvider.getRetrofit(tokenStorage)
     }
 
-    // APIs
+    // ── Remote APIs ──────────────────────────────────────────────────────────
     private val authApi: AuthApi by lazy {
         retrofit.create(AuthApi::class.java)
     }
@@ -53,7 +64,23 @@ class AppContainer(private val context: Context) {
         retrofit.create(FinancingApi::class.java)
     }
 
-    // Repositories
+    private val consultationApi: ConsultationApi by lazy {
+        retrofit.create(ConsultationApi::class.java)
+    }
+
+    private val crmApi: CrmApi by lazy {
+        retrofit.create(CrmApi::class.java)
+    }
+
+    private val billingApi: BillingApi by lazy {
+        retrofit.create(BillingApi::class.java)
+    }
+
+    private val analyticsApi: AnalyticsApi by lazy {
+        retrofit.create(AnalyticsApi::class.java)
+    }
+
+    // ── Singletons Repositories ──────────────────────────────────────────────
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(authApi, tokenStorage)
     }
@@ -68,5 +95,29 @@ class AppContainer(private val context: Context) {
 
     val financingRepository: FinancingRepository by lazy {
         FinancingRepositoryImpl(financingApi, tokenStorage)
+    }
+
+    val consultationRepository: ConsultationRepository by lazy {
+        ConsultationRepositoryImpl(consultationApi)
+    }
+
+    val testDriveRepository: TestDriveRepository by lazy {
+        TestDriveRepositoryImpl(crmApi)
+    }
+
+    val crmRepository: CrmRepository by lazy {
+        CrmRepositoryImpl(crmApi)
+    }
+
+    val messagingRepository: MessagingRepository by lazy {
+        MessagingRepositoryImpl()
+    }
+
+    val billingRepository: BillingRepository by lazy {
+        BillingRepositoryImpl(billingApi)
+    }
+
+    val analyticsRepository: AnalyticsRepository by lazy {
+        AnalyticsRepositoryImpl(analyticsApi)
     }
 }

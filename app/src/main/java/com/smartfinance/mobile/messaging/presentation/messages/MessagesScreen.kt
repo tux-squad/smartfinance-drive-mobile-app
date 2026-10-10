@@ -51,59 +51,64 @@ import com.smartfinance.mobile.core.ui.theme.TextSecondary
 import com.smartfinance.mobile.messaging.domain.model.Conversation
 import com.smartfinance.mobile.shared.ui.layouts.MobileShell
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import com.smartfinance.mobile.messaging.domain.repository.MessagingRepository
+import kotlinx.coroutines.launch
+
 @Composable
 fun MessagesScreen(
+    messagingRepository: MessagingRepository? = null,
     onConversationClick: (Conversation) -> Unit = {}
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
+    var conversations by remember { mutableStateOf<List<Conversation>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
 
-    val conversations = listOf(
-        Conversation(
-            id = "1",
-            dealershipName = "AutoPlaza Lima",
-            vehicleTitle = "Toyota Corolla 2023",
-            lastMessage = "Hola Carlos, bienvenido a AutoPlaza Lim...",
-            timestamp = "Hace 2 min",
-            unreadCount = 2,
-            avatarType = "autoplaza"
-        ),
-        Conversation(
-            id = "2",
-            dealershipName = "MegaMotors Santiago",
-            vehicleTitle = "Honda Civic 2022",
-            lastMessage = "Entendido, procedemos con la cotización...",
-            timestamp = "10:24 AM",
-            unreadCount = 0,
-            avatarType = "megamotors"
-        ),
-        Conversation(
-            id = "3",
-            dealershipName = "DriveCenter Bogotá",
-            vehicleTitle = "Mazda 3 2024",
-            lastMessage = "El test drive quedó agendado para mañana...",
-            timestamp = "Hoy",
-            unreadCount = 0,
-            avatarType = "drivecenter"
-        ),
-        Conversation(
-            id = "4",
-            dealershipName = "Honda Premium",
-            vehicleTitle = "Honda CR-V 2023",
-            lastMessage = "Tu crédito pre-aprobado es apto...",
-            timestamp = "Hoy",
-            unreadCount = 1,
-            avatarType = "honda"
-        ),
-        Conversation(
-            id = "5",
-            dealershipName = "Toyota Oficial",
-            vehicleTitle = "Toyota RAV4 2024",
-            lastMessage = "Contamos con unidades físicas listas...",
-            timestamp = "Hoy",
-            unreadCount = 0,
-            avatarType = "toyota"
-        )
-    )
+    LaunchedEffect(Unit) {
+        if (messagingRepository != null) {
+            isLoading = true
+            conversations = messagingRepository.getConversations()
+            isLoading = false
+        } else {
+            conversations = listOf(
+                Conversation(
+                    id = "1",
+                    dealershipName = "AutoPlaza Lima",
+                    vehicleTitle = "Toyota RAV4 2024",
+                    lastMessage = "Hola Carlos, confirmamos que recibimos tu solicitud de Test Drive. ¿Te esperamos este sábado?",
+                    timestamp = "Hace 5 min",
+                    unreadCount = 1,
+                    avatarType = "autoplaza"
+                ),
+                Conversation(
+                    id = "2",
+                    dealershipName = "MegaMotors Santiago",
+                    vehicleTitle = "Honda Civic 2023",
+                    lastMessage = "Entendido, procedemos con la validación de tus requisitos con la financiera.",
+                    timestamp = "10:24 AM",
+                    unreadCount = 0,
+                    avatarType = "megamotors"
+                ),
+                Conversation(
+                    id = "3",
+                    dealershipName = "EuroMotors San Isidro",
+                    vehicleTitle = "Volkswagen Tiguan 2024",
+                    lastMessage = "Tu cotización con tasa preferencial del 13.5% TEA está lista para revisión.",
+                    timestamp = "Ayer",
+                    unreadCount = 0,
+                    avatarType = "euromotors"
+                )
+            )
+        }
+    }
+
+    val filteredConversations = conversations.filter {
+        it.dealershipName.contains(searchQuery, ignoreCase = true) ||
+        it.vehicleTitle.contains(searchQuery, ignoreCase = true) ||
+        it.lastMessage.contains(searchQuery, ignoreCase = true)
+    }
 
     Column(
         modifier = Modifier
@@ -162,12 +167,12 @@ fun MessagesScreen(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                conversations.forEachIndexed { index, item ->
+                filteredConversations.forEachIndexed { index, item ->
                     ConversationItemRow(
                         conversation = item,
                         onClick = { onConversationClick(item) }
                     )
-                    if (index < conversations.size - 1) {
+                    if (index < filteredConversations.size - 1) {
                         HorizontalDivider(
                             color = Color(0xFFF1F5F9),
                             thickness = 1.dp,

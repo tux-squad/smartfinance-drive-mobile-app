@@ -60,8 +60,10 @@ import com.smartfinance.mobile.core.ui.theme.SmartFinanceDriveTheme
 import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
 import com.smartfinance.mobile.shared.ui.layouts.MobileShell
+import com.smartfinance.mobile.financing.domain.model.FinancialEntity
 import com.smartfinance.mobile.financing.domain.model.PreEvaluation
 import com.smartfinance.mobile.financing.domain.repository.FinancingRepository
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 
 @Composable
@@ -76,20 +78,23 @@ fun PreEvaluationScreen(
 ) {
     var documentNumber by remember { mutableStateOf("72481940") }
     var netIncome by remember { mutableStateOf("2,500") }
-    var selectedBank by remember { mutableStateOf("BCP (Banco de Crédito del Perú)") }
+    var financialEntities by remember { mutableStateOf<List<FinancialEntity>>(emptyList()) }
+    var selectedEntity by remember { mutableStateOf<FinancialEntity?>(null) }
     var isBankDropdownExpanded by remember { mutableStateOf(false) }
     var consentAccepted by remember { mutableStateOf(true) }
     var isSubmitting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    val bankOptions = listOf(
-        "BCP (Banco de Crédito del Perú)",
-        "BBVA Perú",
-        "Interbank",
-        "Scotiabank Perú",
-        "BanBif"
-    )
+    LaunchedEffect(financingRepository) {
+        if (financingRepository != null) {
+            val entities = financingRepository.getFinancialEntities()
+            financialEntities = entities
+            if (entities.isNotEmpty()) {
+                selectedEntity = entities.first()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -279,7 +284,7 @@ fun PreEvaluationScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = selectedBank,
+                        text = selectedEntity?.name ?: "Seleccionar banco aliado...",
                         color = TextPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
@@ -301,17 +306,27 @@ fun PreEvaluationScreen(
                     .fillMaxWidth(0.9f)
                     .background(Color.White)
             ) {
-                bankOptions.forEach { bank ->
+                financialEntities.forEach { entity ->
                     DropdownMenuItem(
                         text = {
-                            Text(
-                                text = bank,
-                                color = TextPrimary,
-                                fontSize = 14.sp
-                            )
+                            Column {
+                                Text(
+                                    text = entity.name,
+                                    color = TextPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                if (entity.minAnnualRate != null) {
+                                    Text(
+                                        text = "TEA referencial desde ${"%.1f".format(entity.minAnnualRate)}%",
+                                        color = Color(0xFF059669),
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
                         },
                         onClick = {
-                            selectedBank = bank
+                            selectedEntity = entity
                             isBankDropdownExpanded = false
                         }
                     )
@@ -372,7 +387,8 @@ fun PreEvaluationScreen(
                                 netMonthlyIncomeUsd = netIncome
                                     .replace(",", "")
                                     .toDoubleOrNull() ?: 0.0,
-                                preferredBank = selectedBank,
+                                preferredBank = selectedEntity?.name ?: "Banco Aliado",
+                                financialEntityId = selectedEntity?.id,
                                 consentAccepted = consentAccepted
                             )
                         )

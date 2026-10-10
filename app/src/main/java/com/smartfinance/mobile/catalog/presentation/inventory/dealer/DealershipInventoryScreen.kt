@@ -20,6 +20,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,8 +35,42 @@ import com.smartfinance.mobile.core.ui.theme.AccentOrange
 
 @Composable
 fun DealershipInventoryScreen(
+    vehicleRepository: com.smartfinance.mobile.catalog.domain.repository.VehicleRepository? = null,
     onNavigateToAddVehicle: () -> Unit = {}
 ) {
+    var inventoryItems by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<List<DealerVehicleItem>>(emptyList())
+    }
+    var isLoading by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(vehicleRepository) {
+        if (vehicleRepository != null) {
+            isLoading = true
+            val listings = vehicleRepository.getMyListings()
+            if (listings.isNotEmpty()) {
+                inventoryItems = listings.map {
+                    DealerVehicleItem(
+                        title = "${it.brand} ${it.model}",
+                        year = it.year.toString(),
+                        days = "En stock",
+                        price = "$${"%,.0f".format(it.priceUsd)}",
+                        condition = if (it.condition.equals("NEW", ignoreCase = true)) "Nuevo" else "Usado",
+                        status = "Activo",
+                        imageUrl = it.imageUrl
+                    )
+                }
+            } else {
+                inventoryItems = listOf(
+                    DealerVehicleItem("Toyota Corolla", "2023", "4 días", "$24,500", "Nuevo", "Activo", "https://images.unsplash.com/photo-1629897048514-3dd74142fb76?auto=format&fit=crop&w=600&q=80"),
+                    DealerVehicleItem("Honda Civic", "2022", "14 días", "$21,900", "Usado", "Activo", "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=600&q=80"),
+                    DealerVehicleItem("Ford Explorer", "2021", "28 días", "$34,000", "Usado", "Activo", "https://images.unsplash.com/photo-1519245659620-e859806a8d3b?auto=format&fit=crop&w=600&q=80"),
+                    DealerVehicleItem("Hyundai Elantra", "2023", "2 días", "$22,000", "Nuevo", "Activo", "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=80")
+                )
+            }
+            isLoading = false
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -66,7 +102,7 @@ fun DealershipInventoryScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Catálogo de unidades de tu concesionaria.",
+                        text = "Catálogo de unidades de tu concesionaria (${inventoryItems.size}).",
                         color = Color(0xFF64748B),
                         fontSize = 14.sp
                     )
@@ -88,15 +124,7 @@ fun DealershipInventoryScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            val dummyInventory = listOf(
-                DealerVehicleItem("Toyota Corolla", "2023", "4 días", "$24,500", "Nuevo", "Activo", "https://images.unsplash.com/photo-1629897048514-3dd74142fb76?auto=format&fit=crop&w=600&q=80"),
-                DealerVehicleItem("Honda Civic", "2022", "14 días", "$21,900", "Usado", "Activo", "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=600&q=80"),
-                DealerVehicleItem("Ford Explorer", "2021", "28 días", "$34,000", "Usado", "Activo", "https://images.unsplash.com/photo-1519245659620-e859806a8d3b?auto=format&fit=crop&w=600&q=80"),
-                DealerVehicleItem("Hyundai Elantra", "2023", "2 días", "$22,000", "Nuevo", "Activo", "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=80"),
-                DealerVehicleItem("Jeep Cherokee", "2019", "45 días", "$18,500", "Usado", "Vendido", "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&q=80"),
-                DealerVehicleItem("Mazda CX-5", "2022", "11 días", "$26,400", "Usado", "Activo", "https://images.unsplash.com/photo-1609521263047-f8f205293f24?auto=format&fit=crop&w=600&q=80")
-            )
-            items(dummyInventory) { item ->
+            items(inventoryItems) { item ->
                 DealerVehicleCard(item)
                 Spacer(modifier = Modifier.height(12.dp))
             }

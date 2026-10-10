@@ -38,18 +38,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddVehicleScreen(
+    vehicleRepository: com.smartfinance.mobile.catalog.domain.repository.VehicleRepository? = null,
     onCancel: () -> Unit = {},
     onSave: () -> Unit = {}
 ) {
-    var condicion by remember { mutableStateOf("") }
+    var condicion by remember { mutableStateOf("Nuevo") }
     var marca by remember { mutableStateOf("") }
     var modelo by remember { mutableStateOf("") }
-    var ano by remember { mutableStateOf("") }
-    var kilometraje by remember { mutableStateOf("") }
+    var ano by remember { mutableStateOf("2024") }
+    var kilometraje by remember { mutableStateOf("0") }
     var precio by remember { mutableStateOf("") }
+    var isPublishing by remember { mutableStateOf(false) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -173,12 +177,39 @@ fun AddVehicleScreen(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Button(
-                    onClick = onSave,
+                    onClick = {
+                        if (vehicleRepository != null) {
+                            scope.launch {
+                                isPublishing = true
+                                vehicleRepository.createVehicle(
+                                    com.smartfinance.mobile.catalog.infrastructure.remote.CreateVehicleResource(
+                                        financialEntityId = "",
+                                        brand = marca.ifBlank { "Toyota" },
+                                        model = modelo.ifBlank { "Corolla" },
+                                        manufactureYear = ano.toIntOrNull() ?: 2024,
+                                        condition = if (condicion.contains("nuevo", ignoreCase = true)) "NEW" else "USED",
+                                        priceAmount = java.math.BigDecimal(precio.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 25000.0),
+                                        currency = "USD",
+                                        imagePath = "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80"
+                                    )
+                                )
+                                isPublishing = false
+                                onSave()
+                            }
+                        } else {
+                            onSave()
+                        }
+                    },
+                    enabled = !isPublishing,
                     colors = ButtonDefaults.buttonColors(containerColor = AccentOrange),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.height(48.dp).weight(1f)
                 ) {
-                    Text("Guardar y Publicar", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = if (isPublishing) "Publicando..." else "Guardar y Publicar",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
 

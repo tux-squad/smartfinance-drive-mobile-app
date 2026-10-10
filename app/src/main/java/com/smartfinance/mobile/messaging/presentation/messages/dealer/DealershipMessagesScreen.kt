@@ -27,10 +27,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.smartfinance.mobile.messaging.domain.repository.MessagingRepository
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
 
 @Composable
-fun DealershipMessagesScreen() {
+fun DealershipMessagesScreen(
+    messagingRepository: MessagingRepository? = null
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()

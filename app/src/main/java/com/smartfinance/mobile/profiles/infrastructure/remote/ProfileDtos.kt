@@ -40,3 +40,20 @@ data class ProfileResource(
     val monthlyIncomeCurrency: String,
     val employmentStatus: String
 )
+
+data class ReniecDniResource(
+    val dni: String = "",
+    val verificationDigit: String? = null,
+    val firstNames: String? = null,
+    val paternalSurname: String? = null,
+    val maternalSurname: String? = null,
+    val fullLegalName: String = "",
+    val department: String? = null,
+    val province: String? = null,
+    val district: String? = null,
+    val address: String? = null,
+    val fullAddress: String? = null,
+    val birthDate: String? = null,
+    val gender: String? = null
+)
+

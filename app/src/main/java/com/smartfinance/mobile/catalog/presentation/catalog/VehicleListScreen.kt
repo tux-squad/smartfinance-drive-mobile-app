@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,194 +64,290 @@ import com.smartfinance.mobile.core.ui.theme.SurfaceDark
 import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
 import com.smartfinance.mobile.shared.ui.layouts.MobileShell
+import kotlinx.coroutines.launch
 import com.smartfinance.mobile.catalog.domain.model.Vehicle
 import com.smartfinance.mobile.catalog.domain.repository.VehicleRepository
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Surface
 
 @Composable
 fun VehicleListScreen(
     vehicleRepository: VehicleRepository? = null,
+    username: String? = null,
     onNavigateToDealerships: () -> Unit = {},
+    onOpenDetail: (Vehicle) -> Unit = {},
     onRequestPreEvaluation: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     var vehicles by remember { mutableStateOf<List<Vehicle>>(emptyList()) }
+    var brands by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedBrand by remember { mutableStateOf("Todos") }
+    var searchQuery by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var currentPage by remember { mutableStateOf(0) }
+    var hasMoreVehicles by remember { mutableStateOf(true) }
+    var isLoadingMore by remember { mutableStateOf(false) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
-    LaunchedEffect(vehicleRepository) {
+    LaunchedEffect(Unit) {
         if (vehicleRepository != null) {
-            vehicles = vehicleRepository.getRecommendedVehicles()
+            brands = listOf("Todos") + vehicleRepository.getBrands()
         }
     }
 
-    Column(
+    LaunchedEffect(selectedBrand, vehicleRepository) {
+        if (vehicleRepository != null) {
+            isLoading = true
+            currentPage = 0
+            val initial = vehicleRepository.getVehicles(
+                page = 0,
+                size = 15,
+                brand = if (selectedBrand == "Todos") null else selectedBrand
+            )
+            vehicles = initial
+            hasMoreVehicles = initial.size >= 15
+            isLoading = false
+        }
+    }
+
+    val filteredVehicles = remember(vehicles, searchQuery) {
+        if (searchQuery.isBlank()) {
+            vehicles
+        } else {
+            val query = searchQuery.trim().lowercase()
+            vehicles.filter {
+                it.brand.lowercase().contains(query) ||
+                    it.model.lowercase().contains(query) ||
+                    it.year.toString().contains(query)
+            }
+        }
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF4F7FB))
+            .background(Color(0xFFF4F7FB)),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp, vertical = 12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp)
-        ) {
+        // Encabezado
+        item {
             Text(
                 text = "Panel de Comprador / Inicio",
                 color = TextSecondary,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(top = 12.dp)
+                fontSize = 14.sp
             )
 
+            val displayName = username?.takeIf { it.isNotBlank() } ?: "Comprador"
             Text(
-                text = "Bienvenido, Carlos",
+                text = "Bienvenido, $displayName",
                 color = TextPrimary,
-                fontSize = 28.sp,
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 6.dp)
             )
 
             Text(
-                text = "Gestiona tus búsquedas y financiamiento automotriz.",
+                text = "Explora el catálogo certificado y simula tu financiamiento.",
                 color = TextSecondary,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 2.dp)
             )
 
-            SearchBar()
-
-            Text(
-                text = "Recomendados para ti",
-                color = TextPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = 18.dp)
+            // Buscador
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Buscar por marca o modelo...", color = TextSecondary) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = TextSecondary
+                    )
+                },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryBlue,
+                    unfocusedBorderColor = BorderSoft,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    cursorColor = PrimaryBlue
+                )
             )
 
-            if (vehicles.isNotEmpty()) {
-                val vehicle = vehicles.first()
-                val title = "${vehicle.brand} ${vehicle.model} ${vehicle.year}"
-                val price = "$${"%,.2f".format(vehicle.priceUsd)} USD"
-                OfferCard(
-                    title = title,
-                    price = price,
-                    details = "${vehicle.city} • ${vehicle.kilometers} km",
-                    imageUrl = vehicle.imageUrl,
-                    onRequestPreEvaluation = { onRequestPreEvaluation(title, price, vehicle.id) }
-                )
-            } else if (vehicleRepository != null) {
-                Text(
-                    text = "No hay vehículos disponibles en este momento.",
-                    color = TextSecondary,
-                    modifier = Modifier.padding(top = 24.dp)
-                )
-            } else {
-                OfferCard(
-                    title = "Vista previa del catálogo",
-                    price = "Conecta el backend para ver precios",
-                    details = "Los vehículos se cargarán desde la API.",
-                    imageUrl = "",
-                    onRequestPreEvaluation = {}
-                )
+            // Chips de Marcas
+            if (brands.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(brands) { brand ->
+                        val isSelected = brand == selectedBrand
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedBrand = brand },
+                            label = { Text(brand, fontSize = 13.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = PrimaryBlue,
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White,
+                                labelColor = TextPrimary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) PrimaryBlue else BorderSoft
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            RecommendationCard(
-                imageUrl = "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80"
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Vehículos disponibles (${filteredVehicles.size})",
+                    color = TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = PrimaryBlue
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
         }
-    }
-}
 
-@Composable
-private fun TopHeader() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Brush.verticalGradient(colors = listOf(PrimaryBlueDark, PrimaryBlue)))
-            .padding(top = 18.dp, start = 18.dp, end = 18.dp, bottom = 18.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        // Estado vacío
+        if (!isLoading && filteredVehicles.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = Color(0xFF94A3B8),
+                            modifier = Modifier.size(44.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No se encontraron vehículos",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Prueba con otra marca o término de búsqueda.",
+                            color = TextSecondary,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        // Lista de vehículos
+        items(filteredVehicles, key = { it.id }) { vehicle ->
+            val title = "${vehicle.brand} ${vehicle.model} ${vehicle.year}"
+            val price = "$${"%,.2f".format(vehicle.priceUsd)} USD"
+            val details = "${vehicle.city} • ${vehicle.kilometers} km"
+
+            OfferCard(
+                title = title,
+                price = price,
+                details = details,
+                imageUrl = vehicle.imageUrl,
+                onCardClick = { onOpenDetail(vehicle) },
+                onRequestPreEvaluation = { onRequestPreEvaluation(title, price, vehicle.id) }
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+        }
+
+        // Paginación: Cargar más vehículos
+        if (hasMoreVehicles && !isLoading && filteredVehicles.isNotEmpty()) {
+            item {
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.14f))
-                        .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Circle,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.9f),
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = "SmartFinance\nDrive",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 14.sp
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notificaciones",
-                        tint = Color.White
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    if (isLoadingMore) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = PrimaryBlue
+                        )
+                    } else {
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = {
+                                if (vehicleRepository != null && !isLoadingMore) {
+                                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).let {
+                                        scope.launch {
+                                            isLoadingMore = true
+                                            val nextPage = currentPage + 1
+                                            val more = vehicleRepository.getVehicles(
+                                                page = nextPage,
+                                                size = 15,
+                                                brand = if (selectedBrand == "Todos") null else selectedBrand
+                                            )
+                                            if (more.isNotEmpty()) {
+                                                vehicles = vehicles + more
+                                                currentPage = nextPage
+                                                hasMoreVehicles = more.size >= 15
+                                            } else {
+                                                hasMoreVehicles = false
+                                            }
+                                            isLoadingMore = false
+                                        }
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Cargar más vehículos", color = PrimaryBlue, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 }
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchBar() {
-    OutlinedTextField(
-        value = "",
-        onValueChange = {},
-        placeholder = { Text("Buscar vehículos por marca, modelo...", color = TextSecondary) },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = TextSecondary
-            )
-        },
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 18.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = BorderSoft,
-            unfocusedBorderColor = BorderSoft,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            cursorColor = PrimaryBlue
-        )
-    )
 }
 
 @Composable
@@ -259,25 +356,26 @@ private fun OfferCard(
     price: String,
     details: String,
     imageUrl: String,
+    onCardClick: () -> Unit = {},
     onRequestPreEvaluation: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 18.dp),
+            .clickable { onCardClick() },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(188.dp)
+                    .height(180.dp)
             ) {
                 AsyncImage(
                     model = imageUrl,
-                    contentDescription = null,
+                    contentDescription = title,
                     contentScale = ContentScale.Crop,
                     placeholder = ColorPainter(Color(0xFFE5E7EB)),
                     modifier = Modifier
@@ -285,14 +383,14 @@ private fun OfferCard(
                         .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
                 )
                 Text(
-                    text = "Recomendado",
+                    text = "Certificado",
                     color = Color.White,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier
                         .padding(12.dp)
-                        .background(Color.Black.copy(alpha = 0.26f), RoundedCornerShape(999.dp))
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                        .background(Color.Black.copy(alpha = 0.40f), RoundedCornerShape(999.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
 
@@ -306,9 +404,9 @@ private fun OfferCard(
                 Text(
                     text = price,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = PrimaryBlue,
                     fontSize = 18.sp,
-                    modifier = Modifier.padding(top = 5.dp)
+                    modifier = Modifier.padding(top = 4.dp)
                 )
                 Text(
                     text = details,
@@ -316,20 +414,34 @@ private fun OfferCard(
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                Button(
-                    onClick = onRequestPreEvaluation,
+
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 14.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentOrange)
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = "Solicitar Pre-evaluación",
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(vertical = 2.dp)
-                    )
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = onCardClick,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Ver detalle", fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = onRequestPreEvaluation,
+                        modifier = Modifier.weight(1.3f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentOrange)
+                    ) {
+                        Text(
+                            text = "Pre-evaluar",
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
         }

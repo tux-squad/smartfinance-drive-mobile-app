@@ -230,12 +230,7 @@ fun LoginScreen(
                                 errorMessage = "El servicio de autenticación no está disponible."
                             } else {
                                 result.onSuccess { user ->
-                                    val role = user.role.uppercase()
-                                    onLoginSuccess(
-                                        role.contains("DEALER") ||
-                                            role.contains("DEALERSHIP") ||
-                                            role.contains("CONCESION")
-                                    )
+                                    onLoginSuccess(user.isDealer)
                                 }.onFailure {
                                     errorMessage = "No se pudo iniciar sesión. Verifica tus credenciales."
                                 }

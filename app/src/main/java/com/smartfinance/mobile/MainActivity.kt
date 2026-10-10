@@ -59,8 +59,23 @@ class MainActivity : ComponentActivity() {
                 val application = application as SmartFinanceApplication
                 val container = application.container
 
+<<<<<<< Updated upstream
                 // ── Top-level app screen (Login → Consumer app) ───────────
                 var appScreen by remember { mutableStateOf(AppScreen.LOGIN) }
+=======
+                CompositionLocalProvider(LocalConfiguration provides appConfiguration) {
+                    val initialUser = remember { container.authRepository.getCurrentUser() }
+                    // ── Top-level app screen (Login → Consumer app) ───────────
+                    var appScreen by remember {
+                        mutableStateOf(
+                            when {
+                                initialUser == null -> AppScreen.LOGIN
+                                initialUser.isDealer -> AppScreen.DEALERSHIP_APP
+                                else -> AppScreen.CONSUMER_APP
+                            }
+                        )
+                    }
+>>>>>>> Stashed changes
 
                 when (appScreen) {
 
@@ -109,6 +124,9 @@ class MainActivity : ComponentActivity() {
                         var selectedVehicleName  by remember { mutableStateOf("Toyota RAV4 2024") }
                         var selectedVehiclePrice by remember { mutableStateOf("\$28,500 USD") }
                         var selectedVehicleId by remember { mutableStateOf("1") }
+                        var selectedVehicleDealer by remember { mutableStateOf("AutoPlaza Lima") }
+                        var selectedDealershipId by remember { mutableStateOf("") }
+                        var selectedDealershipAddress by remember { mutableStateOf("") }
 
                         // Helper: reset all "Buscar" sub-screens
                         fun resetBuscar() {
@@ -156,6 +174,16 @@ class MainActivity : ComponentActivity() {
                                                     selectedIndex = 5
                                                     isConfigurationOpen = true
                                                 }
+                                                "logout"     -> {
+                                                    scope.launch {
+                                                        container.authRepository.signOut()
+                                                        appScreen = AppScreen.LOGIN
+                                                    }
+                                                }
+                                                "call_support" -> {
+                                                    val dialIntent = android.content.Intent(android.content.Intent.ACTION_DIAL, android.net.Uri.parse("tel:+5116192000"))
+                                                    try { startActivity(dialIntent) } catch (_: Exception) {}
+                                                }
                                             }
                                         }
                                     )
@@ -195,8 +223,18 @@ class MainActivity : ComponentActivity() {
                                     // ── TAB 0: Inicio / Catálogo ──────────
                                     0 -> VehicleListScreen(
                                         vehicleRepository = container.vehicleRepository,
+                                        username = container.tokenStorage.getUsername(),
                                         onNavigateToDealerships = {
                                             selectedIndex = 1; resetBuscar()
+                                        },
+                                        onOpenDetail = { vehicle ->
+                                            selectedVehicleName   = "${vehicle.brand} ${vehicle.model} ${vehicle.year}"
+                                            selectedVehiclePrice  = "$${"%,.2f".format(vehicle.priceUsd)} USD"
+                                            selectedVehicleId     = vehicle.id
+                                            selectedVehicleDealer = if (vehicle.dealershipId.isNullOrBlank()) "AutoPlaza Lima" else vehicle.dealershipId
+                                            selectedIndex = 1
+                                            resetBuscar()
+                                            isVehicleDetailOpen = true
                                         },
                                         onRequestPreEvaluation = { name, price, id ->
                                             selectedVehicleName  = name
@@ -213,7 +251,10 @@ class MainActivity : ComponentActivity() {
 
                                         // ① Test Drive
                                         isTestDriveOpen -> TestDriveScreen(
-                                            vehicleName = selectedVehicleName,
+                                            testDriveRepository = container.testDriveRepository,
+                                            vehicleId           = selectedVehicleId,
+                                            vehicleName         = selectedVehicleName,
+                                            dealershipName      = selectedVehicleDealer,
                                             onBack = {
                                                 isTestDriveOpen     = false
                                                 isVehicleDetailOpen = true
@@ -257,6 +298,8 @@ class MainActivity : ComponentActivity() {
 
                                         // ④ Detalle de vehículo
                                         isVehicleDetailOpen -> VehicleDetailScreen(
+                                            vehicleId   = selectedVehicleId,
+                                            vehicleRepository = container.vehicleRepository,
                                             vehicleName = selectedVehicleName,
                                             price       = selectedVehiclePrice,
                                             onBack = {
@@ -279,25 +322,45 @@ class MainActivity : ComponentActivity() {
 
                                         // ⑤ Inventario
                                         isInventoryOpen -> InventoryScreen(
-                                            onOpenDetail = {
-                                                isInventoryOpen     = false
-                                                isVehicleDetailOpen = true
-                                                selectedVehicleName  = "Toyota RAV4 2024"
-                                                selectedVehiclePrice = "\$28,500 USD"
+                                            dealershipId = selectedDealershipId,
+                                            dealershipName = selectedVehicleDealer,
+                                            dealershipAddress = selectedDealershipAddress.ifBlank { "Av. Javier Prado Este 4571" },
+                                            vehicleRepository = container.vehicleRepository,
+                                            onBack = {
+                                                isInventoryOpen = false
+                                            },
+                                            onOpenDetail = { vehicle ->
+                                                selectedVehicleName   = "${vehicle.brand} ${vehicle.model} ${vehicle.year}"
+                                                selectedVehiclePrice  = "$${"%,.2f".format(vehicle.priceUsd)} USD"
+                                                selectedVehicleId     = vehicle.id
+                                                selectedVehicleDealer = if (vehicle.dealershipId.isNullOrBlank()) selectedVehicleDealer else vehicle.dealershipId
+                                                isInventoryOpen       = false
+                                                isVehicleDetailOpen   = true
                                             }
                                         )
 
                                         // ⑥ Concesionarias (entrada del tab)
                                         else -> ConcesionariasScreen(
-                                            onOpenInventory = { isInventoryOpen = true }
+                                            vehicleRepository = container.vehicleRepository,
+                                            onOpenInventory = { dealer ->
+                                                selectedDealershipId      = dealer.id
+                                                selectedVehicleDealer     = dealer.name
+                                                selectedDealershipAddress = dealer.address
+                                                isInventoryOpen           = true
+                                            }
                                         )
                                     }
 
                                     // ── TAB 2: Mensajes ───────────────────
-                                    2 -> MessagesScreen(onConversationClick = {})
+                                    2 -> MessagesScreen(
+                                        messagingRepository = container.messagingRepository,
+                                        onConversationClick = {}
+                                    )
 
                                     // ── TAB 3: Consulta IA ────────────────
-                                    3 -> ConsultaIAScreen()
+                                    3 -> ConsultaIAScreen(
+                                        consultationRepository = container.consultationRepository
+                                    )
 
                                     // ── TAB 4: Mis Solicitudes ────────────
                                     4 -> MisSolicitudesScreen(
@@ -307,7 +370,13 @@ class MainActivity : ComponentActivity() {
                                     // ── TAB 5: Perfil ↔ Configuración ─────
                                     5 -> if (isConfigurationOpen) {
                                         ConfigurationScreen(
-                                            onNavigateToProfile = { isConfigurationOpen = false }
+                                            onNavigateToProfile = { isConfigurationOpen = false },
+                                            onDeleteAccount = {
+                                                scope.launch {
+                                                    container.authRepository.signOut()
+                                                    appScreen = AppScreen.LOGIN
+                                                }
+                                            }
                                         )
                                     } else {
                                         ProfileScreen(
@@ -341,8 +410,15 @@ class MainActivity : ComponentActivity() {
                             drawerContent = {
                                 ModalDrawerSheet(drawerContainerColor = Color.Transparent) {
                                     AppNavigationDrawer(
-                                        selectedRoute = "dealerships", // Temp fallback
-                                        onSelectItem = { scope.launch { drawerState.close() } }
+                                        onSelectItem = { routeKey ->
+                                            scope.launch { drawerState.close() }
+                                            if (routeKey == "logout") {
+                                                scope.launch {
+                                                    container.authRepository.signOut()
+                                                    appScreen = AppScreen.LOGIN
+                                                }
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -367,24 +443,33 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 when (selectedIndex) {
                                     0 -> DealershipDashboardScreen(
+                                        analyticsRepository = container.analyticsRepository,
                                         onNavigateToInventory = { selectedIndex = 1; isAddVehicleOpen = true },
                                         onNavigateToMessages = { selectedIndex = 3 }
                                     )
                                     1 -> {
                                         if (isAddVehicleOpen) {
                                             AddVehicleScreen(
+                                                vehicleRepository = container.vehicleRepository,
                                                 onCancel = { isAddVehicleOpen = false },
                                                 onSave = { isAddVehicleOpen = false }
                                             )
                                         } else {
                                             DealershipInventoryScreen(
+                                                vehicleRepository = container.vehicleRepository,
                                                 onNavigateToAddVehicle = { isAddVehicleOpen = true }
                                             )
                                         }
                                     }
-                                    2 -> DealerProspectsScreen() // Prospect Detail moved to internal navigation if needed later
-                                    3 -> DealershipMessagesScreen()
-                                    4 -> DealershipMembershipScreen()
+                                    2 -> DealerProspectsScreen(
+                                        crmRepository = container.crmRepository
+                                    )
+                                    3 -> DealershipMessagesScreen(
+                                        messagingRepository = container.messagingRepository
+                                    )
+                                    4 -> DealershipMembershipScreen(
+                                        billingRepository = container.billingRepository
+                                    )
                                     5 -> DealershipConfigScreen()
                                     else -> {
                                         Box(modifier = androidx.compose.ui.Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

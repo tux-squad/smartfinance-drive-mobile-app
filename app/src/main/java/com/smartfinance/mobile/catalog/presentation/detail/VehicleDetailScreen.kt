@@ -45,13 +45,23 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.smartfinance.mobile.core.ui.theme.AccentOrange
 import com.smartfinance.mobile.core.ui.theme.BorderSoft
+import com.smartfinance.mobile.core.ui.theme.PrimaryBlue
 import com.smartfinance.mobile.core.ui.theme.SmartFinanceDriveTheme
 import com.smartfinance.mobile.core.ui.theme.TextPrimary
 import com.smartfinance.mobile.core.ui.theme.TextSecondary
 import com.smartfinance.mobile.shared.ui.layouts.MobileShell
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import com.smartfinance.mobile.catalog.domain.model.Vehicle
+import com.smartfinance.mobile.catalog.domain.repository.VehicleRepository
+
 @Composable
 fun VehicleDetailScreen(
+    vehicleId: String? = null,
+    vehicleRepository: VehicleRepository? = null,
     vehicleName: String = "Toyota RAV4 2024",
     price: String = "$28,500 USD",
     onBack: () -> Unit = {},
@@ -59,19 +69,37 @@ fun VehicleDetailScreen(
     onAddToCompare: () -> Unit = {},
     onScheduleTestDrive: () -> Unit = {}
 ) {
-    var selectedImageIndex by remember { mutableStateOf(0) }
+    var vehicle by remember { mutableStateOf<Vehicle?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
 
+    LaunchedEffect(vehicleId, vehicleRepository) {
+        if (!vehicleId.isNullOrBlank() && vehicleRepository != null) {
+            isLoading = true
+            vehicle = vehicleRepository.getVehicleById(vehicleId)
+            isLoading = false
+        }
+    }
+
+    val displayTitle = vehicle?.let { "${it.brand} ${it.model} ${it.year}" } ?: vehicleName
+    val displayPrice = vehicle?.let { "$${"%,.2f".format(it.priceUsd)} USD" } ?: price
+    val displayYear = vehicle?.year?.toString() ?: "2024"
+    val displayKm = vehicle?.let { "${it.kilometers} km" } ?: "0 km"
+    val displayCondition = if (vehicle?.condition.equals("NEW", ignoreCase = true)) "Nuevo" else "Seminuevo"
+    val mainImage = vehicle?.imageUrl?.takeIf { it.isNotBlank() }
+        ?: "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=1200&q=80"
+
+    var selectedImageIndex by remember { mutableStateOf(0) }
     val images = listOf(
-        "https://images.unsplash.com/photo-1553440569-bcc63803a83d?auto=format&fit=crop&w=1200&q=80",
+        mainImage,
         "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=600&q=80"
+        "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80"
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF8FAFC))
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Breadcrumb with Back Navigation
@@ -97,11 +125,21 @@ fun VehicleDetailScreen(
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                text = "Panel de Comprador / Concesionaria / Toyota RAV4",
+                text = "Catálogo / Detalle de Vehículo",
                 color = TextSecondary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = PrimaryBlue
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -118,11 +156,11 @@ fun VehicleDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(185.dp)
+                    .height(200.dp)
             ) {
                 AsyncImage(
-                    model = images[selectedImageIndex],
-                    contentDescription = vehicleName,
+                    model = images.getOrElse(selectedImageIndex) { mainImage },
+                    contentDescription = displayTitle,
                     contentScale = ContentScale.Crop,
                     placeholder = ColorPainter(Color(0xFFE7EEF6)),
                     modifier = Modifier
@@ -139,7 +177,7 @@ fun VehicleDetailScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            for (i in 1..3) {
+            images.forEachIndexed { i, imgUrl ->
                 val isSelected = selectedImageIndex == i
                 Box(
                     modifier = Modifier
@@ -154,7 +192,7 @@ fun VehicleDetailScreen(
                         .clickable { selectedImageIndex = i }
                 ) {
                     AsyncImage(
-                        model = images[i],
+                        model = imgUrl,
                         contentDescription = "Vista $i",
                         contentScale = ContentScale.Crop,
                         placeholder = ColorPainter(Color(0xFFE6EDF8)),
@@ -168,17 +206,17 @@ fun VehicleDetailScreen(
 
         // Title & Price
         Text(
-            text = vehicleName,
+            text = displayTitle,
             color = TextPrimary,
-            fontSize = 24.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(2.dp))
 
         Text(
-            text = price,
-            color = TextPrimary,
+            text = displayPrice,
+            color = PrimaryBlue,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
@@ -203,12 +241,12 @@ fun VehicleDetailScreen(
         ) {
             SpecCard(
                 label = "Año",
-                value = "2024",
+                value = displayYear,
                 modifier = Modifier.weight(1f)
             )
             SpecCard(
                 label = "Kilometraje",
-                value = "0 km",
+                value = displayKm,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -220,13 +258,13 @@ fun VehicleDetailScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SpecCard(
-                label = "Transmisión",
-                value = "Automática",
+                label = "Condición",
+                value = displayCondition,
                 modifier = Modifier.weight(1f)
             )
             SpecCard(
-                label = "Combustible",
-                value = "Híbrido",
+                label = "Ciudad",
+                value = vehicle?.city ?: "Lima",
                 modifier = Modifier.weight(1f)
             )
         }

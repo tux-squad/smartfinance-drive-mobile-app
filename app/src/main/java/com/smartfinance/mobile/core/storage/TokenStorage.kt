@@ -21,16 +21,70 @@ class TokenStorage(context: Context) {
         prefs.edit().putString(KEY_ACCESS_TOKEN, encrypt(token)).apply()
     }
 
+    fun getToken(): String? = decrypt(prefs.getString(KEY_ACCESS_TOKEN, null))
+
+    fun saveRefreshToken(refreshToken: String) {
+        prefs.edit().putString(KEY_REFRESH_TOKEN, encrypt(refreshToken)).apply()
+    }
+
+    fun getRefreshToken(): String? = decrypt(prefs.getString(KEY_REFRESH_TOKEN, null))
+
     fun saveUserId(userId: String) {
         prefs.edit().putString(KEY_USER_ID, encrypt(userId)).apply()
     }
 
     fun getUserId(): String? = decrypt(prefs.getString(KEY_USER_ID, null))
 
-    fun getToken(): String? = decrypt(prefs.getString(KEY_ACCESS_TOKEN, null))
+    fun saveUsername(username: String) {
+        prefs.edit().putString(KEY_USERNAME, encrypt(username)).apply()
+    }
+
+    fun getUsername(): String? = decrypt(prefs.getString(KEY_USERNAME, null))
+
+    fun saveRoles(roles: List<String>) {
+        val serialized = roles.joinToString(",")
+        prefs.edit().putString(KEY_ROLES, encrypt(serialized)).apply()
+    }
+
+    fun getRoles(): List<String> {
+        val decrypted = decrypt(prefs.getString(KEY_ROLES, null))
+        return if (!decrypted.isNullOrBlank()) {
+            decrypted.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        } else {
+            emptyList()
+        }
+    }
+
+    fun saveSession(
+        token: String,
+        refreshToken: String,
+        userId: String,
+        username: String,
+        roles: List<String>
+    ) {
+        saveToken(token)
+        saveRefreshToken(refreshToken)
+        saveUserId(userId)
+        saveUsername(username)
+        saveRoles(roles)
+    }
+
+    fun hasSession(): Boolean {
+        return !getToken().isNullOrBlank() && !getRefreshToken().isNullOrBlank()
+    }
+
+    fun clearSession() {
+        prefs.edit()
+            .remove(KEY_ACCESS_TOKEN)
+            .remove(KEY_REFRESH_TOKEN)
+            .remove(KEY_USER_ID)
+            .remove(KEY_USERNAME)
+            .remove(KEY_ROLES)
+            .apply()
+    }
 
     fun clearToken() {
-        prefs.edit().remove(KEY_ACCESS_TOKEN).remove(KEY_USER_ID).apply()
+        clearSession()
     }
 
     private fun encrypt(value: String): String {
@@ -84,7 +138,10 @@ class TokenStorage(context: Context) {
     companion object {
         private const val PREFS_NAME = "smartfinance_prefs"
         private const val KEY_ACCESS_TOKEN = "access_token"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_USER_ID = "user_id"
+        private const val KEY_USERNAME = "username"
+        private const val KEY_ROLES = "roles"
         private const val KEY_ALIAS = "smartfinance_session_key"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"

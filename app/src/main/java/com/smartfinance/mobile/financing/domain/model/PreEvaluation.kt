@@ -8,5 +8,6 @@ data class PreEvaluation(
     val documentNumber: String,
     val netMonthlyIncomeUsd: Double,
     val preferredBank: String,
+    val financialEntityId: String? = null,
     val consentAccepted: Boolean = true
 )
